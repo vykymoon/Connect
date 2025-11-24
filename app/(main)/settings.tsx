@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams, useRouter } from 'expo-router'; // 1. IMPORTAR useLocalSearchParams
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -22,10 +22,8 @@ import { useAuth } from '../../src/providers/AuthProvider';
 export default function SettingsScreen() {
   const router = useRouter();
   const { session } = useAuth();
-  
-  // 2. ESCUCHAR PARÁMETROS (Para recibir la foto de la cámara)
   const params = useLocalSearchParams();
-
+  
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -33,7 +31,6 @@ export default function SettingsScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
 
-  // 3. EFECTO: SI VIENE FOTO DE LA CÁMARA, USARLA
   useEffect(() => {
     if (params.avatarFromCamera) {
       setImageUri(params.avatarFromCamera as string);
@@ -73,7 +70,6 @@ export default function SettingsScreen() {
     }
   }
 
-  // 4. MENÚ DE SELECCIÓN (CÁMARA O GALERÍA)
   const handleEditPhoto = () => {
     Alert.alert(
       "Change Profile Photo",
@@ -82,7 +78,7 @@ export default function SettingsScreen() {
         { text: "Cancel", style: "cancel" },
         { 
           text: "Take Photo", 
-          onPress: () => router.push('/camera') // Abre el modal de cámara
+          onPress: () => router.push('/camera') 
         },
         { 
           text: "Choose from Gallery", 
@@ -92,7 +88,6 @@ export default function SettingsScreen() {
     );
   };
 
-  // Seleccionar desde Galería
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -163,6 +158,26 @@ export default function SettingsScreen() {
     }
   }
 
+  // --- NUEVA FUNCIÓN: CERRAR SESIÓN ---
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to log out?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Log Out", 
+          style: "destructive",
+          onPress: async () => {
+            const { error } = await supabase.auth.signOut();
+            if (error) Alert.alert("Error", error.message);
+            // El AuthProvider detectará el cambio y te llevará al login automáticamente
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView 
@@ -183,7 +198,6 @@ export default function SettingsScreen() {
 
           {/* AVATAR SECTION */}
           <View style={styles.avatarSection}>
-            {/* 5. CONECTAMOS EL onPress AL NUEVO MENÚ */}
             <TouchableOpacity onPress={handleEditPhoto} style={styles.avatarWrapper}>
               {imageUri ? (
                 <Image source={{ uri: imageUri }} style={styles.avatar} />
@@ -204,7 +218,6 @@ export default function SettingsScreen() {
           {/* FORMULARIO */}
           <View style={styles.form}>
             
-            {/* Username */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Username</Text>
               <View style={styles.inputContainer}>
@@ -219,7 +232,6 @@ export default function SettingsScreen() {
               </View>
             </View>
 
-            {/* Phone Number */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Phone Number</Text>
               <View style={styles.inputContainer}>
@@ -235,7 +247,6 @@ export default function SettingsScreen() {
               </View>
             </View>
 
-            {/* Email */}
             <View style={styles.inputGroup}>
                <Text style={styles.inputLabel}>Email</Text>
                <View style={[styles.inputContainer, styles.disabledInput]}>
@@ -249,7 +260,6 @@ export default function SettingsScreen() {
               </View>
             </View>
 
-            {/* Password */}
             <View style={styles.inputGroup}>
                <Text style={styles.inputLabel}>Password</Text>
                <View style={[styles.inputContainer, styles.disabledInput]}>
@@ -264,6 +274,12 @@ export default function SettingsScreen() {
             </View>
 
           </View>
+
+          {/* --- BOTÓN DE CERRAR SESIÓN --- */}
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+             <Ionicons name="log-out-outline" size={20} color="#FF3B30" style={{marginRight: 8}} />
+             <Text style={styles.signOutText}>Log Out</Text>
+          </TouchableOpacity>
           
           <View style={{ height: 100 }} />
         </ScrollView>
@@ -305,4 +321,16 @@ const styles = StyleSheet.create({
   footer: { padding: 20, paddingBottom: 30, borderTopWidth: 1, borderTopColor: '#f0f0f0', backgroundColor: '#fff' },
   saveButton: { backgroundColor: '#0047FF', borderRadius: 16, paddingVertical: 18, alignItems: 'center', shadowColor: "#0047FF", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  
+  // Estilos del botón Logout
+  signOutButton: { 
+    marginTop: 40, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    padding: 15,
+    backgroundColor: '#FFF5F5', // Rojo muy suave de fondo opcional
+    borderRadius: 12
+  },
+  signOutText: { color: '#FF3B30', fontSize: 16, fontWeight: '600' },
 });

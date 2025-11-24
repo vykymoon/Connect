@@ -107,9 +107,18 @@ export default function MainLayout() {
             tabBarStyle: { display: 'none' },
           }}
         />
+        <Tabs.Screen
+          name="user-profile"
+          options={{
+            href: null,
+            tabBarStyle: { display: 'none' },
+          }}
+        />
 
       </Tabs>
+      
     </>
+    
   );
 }
 
