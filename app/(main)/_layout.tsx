@@ -89,14 +89,7 @@ export default function MainLayout() {
           }}
         />
 
-        {/* --- CAMBIO AQUÍ: MARKET VISIBLE PERO SIN BOTÓN --- */}
-        <Tabs.Screen
-          name="market"
-          options={{
-            href: null, // Oculta el botón
-            // Eliminamos 'display: none' para que la barra SE VEA
-          }}
-        />
+      
 
         {/* Estos sí los ocultamos porque suelen ser pantalla completa */}
         <Tabs.Screen

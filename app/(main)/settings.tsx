@@ -1,19 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router'; // 1. IMPORTAR useLocalSearchParams
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../src/lib/supabase';
@@ -23,18 +23,27 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { session } = useAuth();
   
+  // 2. ESCUCHAR PARÁMETROS (Para recibir la foto de la cámara)
+  const params = useLocalSearchParams();
+
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState(''); // Estado para el teléfono
+  const [phone, setPhone] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
+
+  // 3. EFECTO: SI VIENE FOTO DE LA CÁMARA, USARLA
+  useEffect(() => {
+    if (params.avatarFromCamera) {
+      setImageUri(params.avatarFromCamera as string);
+    }
+  }, [params.avatarFromCamera]);
 
   useEffect(() => {
     if (session) getProfile();
   }, [session]);
 
-  // 1. OBTENER DATOS DEL PERFIL (Incluyendo teléfono)
   async function getProfile() {
     try {
       setLoading(true);
@@ -44,7 +53,7 @@ export default function SettingsScreen() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('username, avatar_url, phone_number') // Pedimos también el teléfono
+        .select('username, avatar_url, phone_number')
         .eq('id', session.user.id)
         .single();
 
@@ -54,7 +63,7 @@ export default function SettingsScreen() {
 
       if (data) {
         setUsername(data.username || '');
-        setPhone(data.phone_number || ''); // Cargamos el teléfono
+        setPhone(data.phone_number || '');
         setAvatarUrl(data.avatar_url);
       }
     } catch (error) {
@@ -64,7 +73,26 @@ export default function SettingsScreen() {
     }
   }
 
-  // 2. SELECCIONAR FOTO
+  // 4. MENÚ DE SELECCIÓN (CÁMARA O GALERÍA)
+  const handleEditPhoto = () => {
+    Alert.alert(
+      "Change Profile Photo",
+      "Choose an option",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Take Photo", 
+          onPress: () => router.push('/camera') // Abre el modal de cámara
+        },
+        { 
+          text: "Choose from Gallery", 
+          onPress: pickImage 
+        }
+      ]
+    );
+  };
+
+  // Seleccionar desde Galería
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -78,7 +106,6 @@ export default function SettingsScreen() {
     }
   };
 
-  // 3. SUBIR FOTO
   const uploadImage = async (uri: string) => {
     try {
       const userId = session?.user.id;
@@ -102,7 +129,6 @@ export default function SettingsScreen() {
     }
   };
 
-  // 4. GUARDAR CAMBIOS (Incluyendo teléfono)
   async function updateProfile() {
     try {
       setLoading(true);
@@ -118,7 +144,7 @@ export default function SettingsScreen() {
       const updates = {
         id: session.user.id,
         username,
-        phone_number: phone, // Guardamos el teléfono
+        phone_number: phone,
         avatar_url: finalAvatarUrl,
         updated_at: new Date(),
       };
@@ -157,7 +183,8 @@ export default function SettingsScreen() {
 
           {/* AVATAR SECTION */}
           <View style={styles.avatarSection}>
-            <TouchableOpacity onPress={pickImage} style={styles.avatarWrapper}>
+            {/* 5. CONECTAMOS EL onPress AL NUEVO MENÚ */}
+            <TouchableOpacity onPress={handleEditPhoto} style={styles.avatarWrapper}>
               {imageUri ? (
                 <Image source={{ uri: imageUri }} style={styles.avatar} />
               ) : avatarUrl ? (
@@ -192,7 +219,7 @@ export default function SettingsScreen() {
               </View>
             </View>
 
-            {/* Phone Number (Nuevo) */}
+            {/* Phone Number */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Phone Number</Text>
               <View style={styles.inputContainer}>
@@ -238,11 +265,10 @@ export default function SettingsScreen() {
 
           </View>
           
-          {/* Espacio extra para scroll */}
           <View style={{ height: 100 }} />
         </ScrollView>
 
-        {/* FOOTER FIXED */}
+        {/* FOOTER */}
         <View style={styles.footer}>
           <TouchableOpacity style={styles.saveButton} onPress={updateProfile} disabled={loading}>
             {loading ? (
@@ -259,20 +285,16 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 15 },
   backButton: { padding: 5, borderRadius: 10, backgroundColor: '#F5F6FA' },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' },
-
   content: { paddingHorizontal: 20, paddingTop: 10 },
   sectionLabel: { fontSize: 18, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 25, textAlign: 'center' },
-
   avatarSection: { alignItems: 'center', marginBottom: 35 },
   avatarWrapper: { position: 'relative', shadowColor: "#0047FF", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 8 },
   avatar: { width: 110, height: 110, borderRadius: 55, borderWidth: 4, borderColor: '#fff' },
   avatarPlaceholder: { backgroundColor: '#F0F2F5', alignItems: 'center', justifyContent: 'center' },
   editIconBadge: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#0047FF', width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#fff' },
-
   form: { gap: 20 },
   inputGroup: { gap: 8 },
   inputLabel: { fontSize: 14, color: '#1A1A1A', fontWeight: '600', marginLeft: 5 },
@@ -280,7 +302,6 @@ const styles = StyleSheet.create({
   disabledInput: { opacity: 0.8, backgroundColor: '#F0F2F5' },
   inputIcon: { marginRight: 12 },
   input: { flex: 1, fontSize: 16, color: '#1A1A1A', height: '100%' },
-
   footer: { padding: 20, paddingBottom: 30, borderTopWidth: 1, borderTopColor: '#f0f0f0', backgroundColor: '#fff' },
   saveButton: { backgroundColor: '#0047FF', borderRadius: 16, paddingVertical: 18, alignItems: 'center', shadowColor: "#0047FF", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
