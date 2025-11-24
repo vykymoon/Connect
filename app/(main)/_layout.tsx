@@ -62,7 +62,6 @@ export default function MainLayout() {
           }}
         />
 
-        {/* TAREAS (Antes Shop) */}
         <Tabs.Screen
           name="shop"
           options={{
@@ -81,9 +80,25 @@ export default function MainLayout() {
           }}
         />
 
-        {/* --- PANTALLAS OCULTAS DE LA BARRA --- */}
-        
-        {/* Chat AI */}
+        {/* --- CAMBIO AQUÍ: CHATS VISIBLE PERO SIN BOTÓN --- */}
+        <Tabs.Screen
+          name="chats"
+          options={{
+            href: null, // Oculta el botón
+            // Eliminamos 'display: none' para que la barra SE VEA
+          }}
+        />
+
+        {/* --- CAMBIO AQUÍ: MARKET VISIBLE PERO SIN BOTÓN --- */}
+        <Tabs.Screen
+          name="market"
+          options={{
+            href: null, // Oculta el botón
+            // Eliminamos 'display: none' para que la barra SE VEA
+          }}
+        />
+
+        {/* Estos sí los ocultamos porque suelen ser pantalla completa */}
         <Tabs.Screen
           name="ai-chat"
           options={{
@@ -92,12 +107,11 @@ export default function MainLayout() {
           }}
         />
 
-        {/* Settings (NUEVO) */}
         <Tabs.Screen
           name="settings"
           options={{
-            href: null, // Ocultar icono
-            tabBarStyle: { display: 'none' }, // Ocultar barra al entrar
+            href: null,
+            tabBarStyle: { display: 'none' },
           }}
         />
 
